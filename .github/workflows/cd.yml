@@ -1,8 +1,10 @@
 name: CD
 
 on:
-  push:
-    branches: [ "main"]
+    workflow_run:
+        workflows: ["CI"] # doit correspondre à 'name': dans le ci.yml
+        types: [completed]
+        branches: [main] # ne déclenche CD que si le run de CI était sur main
 
 jobs:
   deploy:
@@ -60,8 +62,8 @@ jobs:
             fi
 
             echo "[VM] Building & (re)starting with docker compose..."
-            docker compose pull || true
-            docker compose up -d --build
+            docker-compose pull || true
+            docker-compose up -d --build
 
             echo "[VM] Current status:"
-            docker compose ps
+            docker-compose ps
