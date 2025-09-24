@@ -135,3 +135,23 @@ git add .
 git commit -m "MESSAGE DE COMMIT"
 git push
 ```
+
+> À noter qu'il y a eu un changement au niveau du script `init_sql`. De ce fait, j'ai appliqué les changements, puis j'ai rebuild les images comme suit:
+```
+docker compose down
+docker volume ls 
+docker volume rm log430-a25-labo2_mysql_data
+docker build .
+docker compose up -d
+```
+
+Maintenant, au niveau du CD, ma stratégie est d'y aller avec la VM de Azure (étant donné qu'actuellement nous travaillons encore à distance et donc les locaux de l'école ne sont pas accessibles).
+![VM AZURE](vm_azure.png)
+
+Ensuite, les secrets et les variables ont été configurés dans le repo GitHub:
+![Git secrets](git_secrets.png)
+![Git var](git_var.png)
+
+Par la suite, j'ai vérifié la connectivité depuis ma machine locale en m'y connectant:
+![VM TEST](vm_test.png)
+
