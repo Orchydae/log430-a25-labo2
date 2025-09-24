@@ -128,4 +128,10 @@ pip install -r requirements.txt
 pytest -q
 ```
 
-Le fichier `ci.yml` a été modifié en fonction du CI.
+Le fichier `ci.yml` a été modifié en fonction du CI. J'ai procédé par la suite au versionnage du code avec:
+
+```
+git add .
+git commit -m "MESSAGE DE COMMIT"
+git push
+```
