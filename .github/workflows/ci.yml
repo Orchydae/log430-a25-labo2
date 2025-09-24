@@ -8,12 +8,53 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+
+    # ✅ Ajout minimal: services MySQL & Redis
+    services:
+      mysql:
+        image: mysql:8
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: labo02_db
+          MYSQL_USER: labo02
+          MYSQL_PASSWORD: labo02
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot || exit 1"
+          --health-interval=5s
+          --health-timeout=3s
+          --health-retries=30
+
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping || exit 1"
+          --health-interval=5s
+          --health-timeout=3s
+          --health-retries=30
+
+    # ✅ Ajout minimal: env process (si ton code lit os.getenv)
+    env:
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_NAME: labo02_db
+      DB_USER: labo02
+      DB_PASSWORD: labo02   # pour compat si ton code lit DB_PASSWORD
+      REDIS_HOST: 127.0.0.1
+      REDIS_PORT: 6379
+      REDIS_DB: 0
+
     steps:
       - uses: actions/checkout@v4
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -26,8 +67,26 @@ jobs:
           echo "DB_NAME=labo02_db" >> .env
           echo "DB_USER=labo02" >> .env
           echo "DB_PASS=labo02" >> .env
+          echo "DB_PASSWORD=labo02" >> .env   # ✅ petite ligne ajoutée
           echo "REDIS_HOST=127.0.0.1" >> .env
           echo "REDIS_PORT=6379" >> .env
           echo "REDIS_DB=0" >> .env
 
+      # ✅ Ajout minimal: attendre que MySQL/Redis soient prêts
+      - name: Wait for MySQL & Redis
+        run: |
+          echo "Waiting for MySQL..."
+          for i in {1..60}; do
+            mysql -h 127.0.0.1 -u root -proot -e "SELECT 1" >/dev/null 2>&1 && break
+            sleep 1
+          done
+          echo "Waiting for Redis..."
+          for i in {1..60}; do
+            redis-cli -h 127.0.0.1 ping | grep -q PONG && break
+            sleep 1
+          done
 
+      # ✅ Ajout minimal: lancer les tests
+      - name: Run tests
+        run: |
+          pytest -q
