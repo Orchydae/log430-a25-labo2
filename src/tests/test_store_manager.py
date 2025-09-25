@@ -8,7 +8,6 @@ from controllers.order_controller import create_order, remove_order
 from db import get_redis_conn
 from views.report_view import show_highest_spending_users, show_best_sellers
 
-'''
 def test_sync_all_orders_to_redis():     
     orders_added = sync_all_orders_to_redis()
     assert orders_added > 0
@@ -42,7 +41,6 @@ def test_report_best_sellers():
     report_html = show_best_sellers()
     assert "<html>" in report_html
     assert "Les articles les plus vendus" in report_html
-'''
 
 def test_hello_world():
     assert True
