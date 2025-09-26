@@ -176,5 +176,5 @@ def increment_product_counters(items):
         # item peut etre dict ou objet SQLAlchemy
         qty = int(item['quantity']) if isinstance(item, dict) else int(item.quantity)
         pid = int(item['product_id']) if isinstance(item, dict) else int(item.product_id)
-        pipe.hincrby(f"product:{pid}:sold_qty", qty) 
+        pipe.incrby(f"product:{pid}:sold_qty", qty) 
     pipe.execute()

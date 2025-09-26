@@ -283,3 +283,59 @@ def add_order_to_redis(order_id, user_id, total_amount, items):
 > Quelles méthodes avez-vous utilisées pour supprimer des données dans Redis ? Veuillez inclure le code pour illustrer votre réponse.
 
 La méthode `delete(key)` a été utilisée pour retirer les clés liées à une commande.
+```
+def delete_order_from_redis(order_id):
+    """Delete order from Redis"""
+    r = get_redis_conn()
+    r.delete(f"order:{order_id}")
+    r.delete(f"order:{order_id}:items")
+```
+
+# Question 5
+> Si nous souhaitions créer un rapport similaire, mais présentant les produits les plus vendus, les informations dont nous disposons actuellement dans Redis sont-elles suffisantes, ou devrions-nous chercher dans les tables sur MySQL ? Si nécessaire, quelles informations devrions-nous ajouter à Redis ? Veuillez inclure le code pour illustrer votre réponse.
+
+Les informations que nous disposons dans Redis sont effectivement suffisantes, car pour chaque commande, on peut agréger par `product_id` directement depuis Redis (sans lire MySQL).
+
+```
+def get_highest_spending_users(limit=10):
+    """Get report of best selling products for Redis only"""
+    r = get_redis_conn()
+
+    # 1) Recuprer les cles d'ordres
+    order_keys = [k for k in r.keys("order:*") if not k.endswith(":items")]
+
+    # 2) Lire tous les hashes en pipeline
+    pipe = r.pipeline()
+    for k in order_keys:
+        pipe.hgetall(k)
+    hashes = pipe.execute()
+
+    # 3) Agréger par user_id
+    expenses_by_user = defaultdict(float)
+    for h in hashes:
+        if not h: continue
+        try: 
+            uid = int(h.get('user_id', 0))
+            total = float(h.get('total_amount', 0))
+        except Exception:
+            continue
+        expenses_by_user[uid] += total
+
+    # 4) Trier et limiter
+    get_highest_spending_users = sorted(
+        expenses_by_user.items(), 
+        key=lambda x: x[1], 
+        reverse=True
+    )[:limit]
+
+    # 5) Retourner une liste de dicts
+    Row = type("UserSpendingRow", (), {})
+    result = []
+    for uid, total in get_highest_spending_users:
+        row = Row()
+        row.user_id = uid
+        row.total_spent = total
+        result.append(row)
+
+    return result
+```
